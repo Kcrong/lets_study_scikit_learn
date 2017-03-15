@@ -1,25 +1,35 @@
-import numpy as np
-
 from sklearn import svm
 from sklearn.feature_extraction.text import CountVectorizer
 from sklearn.metrics import accuracy_score
-import matplotlib.pyplot as plt
+from data_manager import load_dataset
 
 c = CountVectorizer()
 
-X = c.fit_transform(open('data/corpus_sentence.txt', 'r', encoding='utf8'))
+sentences, labels = load_dataset('private_data/corpus.csv')
 
-with open('data/corpus_tags.txt', 'r', encoding='utf8') as f:
-    y = [_.strip() for _ in f.readlines()]
+total_len = len(sentences)
+train_len = int(total_len * 0.8)
 
-C = 1.0  # SVM regularization parameter
-svc = svm.SVC(kernel='linear', C=C).fit(X, y)
+# make feature label
+c.fit_transform(sentences)
 
-test_sentence = ['yo see you!', 'see ya!', 'good to see you']
+x_train_raw = sentences[:train_len]
+x_train = c.transform(x_train_raw)
 
-result_set = svc.predict(c.transform(test_sentence))
+x_test_raw = sentences[train_len:]
+x_test = c.transform(x_test_raw)
 
-for test, result in zip(test_sentence, result_set):
+y_train = labels[:train_len]
+y_test = labels[train_len:]
+
+
+C = 100  # SVM regularization parameter
+svc = svm.SVC(kernel='linear', C=C).fit(x_train, y_train)
+
+
+result_set = svc.predict(x_test)
+
+for test, result in zip(x_test_raw, result_set):
     print(test, ' : ', result)
 
-print(accuracy_score(['when-bye', 'when-bye', 'when-meet'], result_set))
+print(accuracy_score(y_test, result_set))
